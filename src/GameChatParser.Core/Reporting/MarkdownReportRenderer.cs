@@ -10,7 +10,6 @@ namespace GameChatParser.Core.Reporting;
 public sealed class MarkdownReportRenderer : IReportRenderer
 {
     private const int MinimumPositionWidth = 3;
-    private const int MinimumPlayerWidth = 16;
     private const int MinimumPlayedWidth = 4;
     private const int MinimumAverageWidth = 6;
     private const string ColumnGap = "   ";
@@ -20,9 +19,15 @@ public sealed class MarkdownReportRenderer : IReportRenderer
         ArgumentNullException.ThrowIfNull(report);
         ArgumentNullException.ThrowIfNull(writer);
 
+        // Names are shortened against the whole report rather than one table at a time, so
+        // a player reads the same way wherever they turn up in it.
+        var displayNames = PlayerNameShortener.Shorten(report.Leaderboards
+            .SelectMany(leaderboard => leaderboard.Entries)
+            .Select(entry => entry.Player));
+
         foreach (var leaderboard in report.Leaderboards)
         {
-            Render(leaderboard, writer);
+            Render(leaderboard, writer, displayNames);
         }
     }
 
@@ -31,18 +36,29 @@ public sealed class MarkdownReportRenderer : IReportRenderer
         ArgumentNullException.ThrowIfNull(leaderboard);
         ArgumentNullException.ThrowIfNull(writer);
 
+        Render(
+            leaderboard,
+            writer,
+            PlayerNameShortener.Shorten(leaderboard.Entries.Select(entry => entry.Player)));
+    }
+
+    private static void Render(
+        Leaderboard leaderboard,
+        TextWriter writer,
+        IReadOnlyDictionary<string, string> displayNames)
+    {
         var rows = leaderboard.Entries
             .Select(entry => (
                 Position: FormatPosition(entry),
-                entry.Player,
+                Player: DisplayName(displayNames, entry.Player),
                 Played: entry.Played.ToString(CultureInfo.InvariantCulture),
                 Average: entry.Average.ToString("F3", CultureInfo.InvariantCulture)))
             .ToList();
 
-        // Columns widen to fit their contents but never narrow past the widths the family
-        // is used to reading, so a long name cannot knock the table out of alignment.
+        // The numeric columns never narrow past the widths the family is used to reading,
+        // while the name column takes only the room the longest name on the table needs.
         var positionWidth = ColumnWidth(rows.Select(row => row.Position), MinimumPositionWidth);
-        var playerWidth = ColumnWidth(rows.Select(row => row.Player), MinimumPlayerWidth);
+        var playerWidth = ColumnWidth(rows.Select(row => row.Player), minimum: 0, padding: 0);
         var playedWidth = ColumnWidth(rows.Select(row => row.Played), MinimumPlayedWidth, padding: 0);
         var averageWidth = ColumnWidth(rows.Select(row => row.Average), MinimumAverageWidth, padding: 0);
 
@@ -54,6 +70,7 @@ public sealed class MarkdownReportRenderer : IReportRenderer
             writer.WriteLine(
                 row.Position.PadRight(positionWidth) +
                 row.Player.PadRight(playerWidth) +
+                ColumnGap +
                 row.Played.PadLeft(playedWidth) +
                 ColumnGap +
                 row.Average.PadLeft(averageWidth));
@@ -61,6 +78,9 @@ public sealed class MarkdownReportRenderer : IReportRenderer
 
         writer.WriteLine("```");
     }
+
+    private static string DisplayName(IReadOnlyDictionary<string, string> displayNames, string player) =>
+        displayNames.TryGetValue(player, out var shortened) ? shortened : player;
 
     /// <summary>
     /// Renders a player's position as <c>1.</c>, or as <c>1=</c> where the position is

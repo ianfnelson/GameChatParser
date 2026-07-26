@@ -36,7 +36,7 @@ The README documents the ranking algorithms in full. What matters structurally:
 
 **Connections squares are outside the basic multilingual plane.** Never put them in a regex character class: `[🟨🟩🟦🟪]{4}` compiles to a class of UTF-16 code units and matches two squares rather than four. This was a real bug inherited from the predecessor. Classify rows by iterating runes, as `ConnectionsGame.ClassifyRow` does. Row width is also what tells a four-wide Connections grid from a five-wide Wordle one, which share two colours.
 
-**Test player names are load-bearing in two ways.** `MarkdownReportRendererTests` asserts byte-exact column padding, so changing a name's *length* breaks it. `LeaderboardBuilderTests` tie-breaks alphabetically, so changing a name's *ordinal order* breaks it. Both are deliberate; match the existing lengths and ordering when adding or renaming test players.
+**Test player names are load-bearing in three ways.** `MarkdownReportRendererTests` asserts byte-exact column padding, and the padding follows the *displayed* name, so changing a *forename's* length breaks it. `PlayerNameShortener` shortens each name against the others it is rendered beside, so giving a test player a forename another one already has changes how both of them render. `LeaderboardBuilderTests` tie-breaks alphabetically, so changing a name's *ordinal order* breaks it. All three are deliberate; match the existing forenames, lengths and ordering when adding or renaming test players.
 
 **Periods are relative to the data, not to today.** The two most recent years and months *that hold results* are reported, so a chat that went quiet still reports on when it was last active. Tests rely on this; do not switch to `DateTime.Now`.
 
@@ -50,6 +50,6 @@ The application is run against a private family WhatsApp chat. **No real partici
 
 ## Verifying a change to scoring or output
 
-This application replaced [WordleParser](https://github.com/ianfnelson/WordleParser) and [ConnectionsParser](https://github.com/ianfnelson/ConnectionsParser), and reproduces their output byte for byte. When changing parsing, grouping or rendering, run all three against the same export and diff the leaderboards. That check is what catches a regression the unit tests cannot see, and it is stronger than any assertion in the suite.
+This application replaced [WordleParser](https://github.com/ianfnelson/WordleParser) and [ConnectionsParser](https://github.com/ianfnelson/ConnectionsParser), and reproduced their output byte for byte until issue #5 shortened player names and sized the name column to fit them. The name column no longer matches, but the positions, played counts and averages still do. When changing parsing, grouping or rendering, run all three against the same export and diff the leaderboards, ignoring the name column. That check is what catches a regression the unit tests cannot see, and it is stronger than any assertion in the suite.
 
-Note that it stops being available once the Connections scoring is deliberately changed, which is proposed in issue #2.
+Note that it stops being available altogether once the Connections scoring is deliberately changed, which is proposed in issue #2.
