@@ -1,5 +1,6 @@
 using GameChatParser.Core.Games;
 using GameChatParser.Core.Games.Connections;
+using GameChatParser.Core.Games.Strands;
 using GameChatParser.Core.Games.Wordle;
 
 namespace GameChatParser.Tests.Games;
@@ -7,12 +8,13 @@ namespace GameChatParser.Tests.Games;
 public class GameRegistryTests
 {
     [Fact]
-    public void Registers_wordle_ahead_of_connections()
+    public void Registers_the_games_in_the_order_they_are_printed()
     {
         Assert.Collection(
             GameRegistry.Default,
             game => Assert.IsType<WordleGame>(game),
-            game => Assert.IsType<ConnectionsGame>(game));
+            game => Assert.IsType<ConnectionsGame>(game),
+            game => Assert.IsType<StrandsGame>(game));
     }
 
     [Fact]

@@ -32,17 +32,21 @@ The README documents the ranking algorithms in full. What matters structurally:
 
 ## Things that will bite you
 
-**Puzzle epochs are calibrated against real shared results, not against the games' launch dates.** Wordle's `PuzzleZeroDate` is a day later than Wordle launched, because the New York Times renumbered. Changing either epoch by one day silently moves every result into a neighbouring month and quietly corrupts every leaderboard. Verify against a known pairing (Wordle 1,281 is 21 December 2024; Connections #619 is 19 February 2025).
+**Puzzle epochs are calibrated against real shared results, not against the games' launch dates.** Wordle's `PuzzleZeroDate` is a day later than Wordle launched, because the New York Times renumbered. Changing either epoch by one day silently moves every result into a neighbouring month and quietly corrupts every leaderboard. Verify against a known pairing (Wordle 1,281 is 21 December 2024; Connections #619 is 19 February 2025; Strands #764 is 6 April 2026).
 
 **Connections squares are outside the basic multilingual plane.** Never put them in a regex character class: `[🟨🟩🟦🟪]{4}` compiles to a class of UTF-16 code units and matches two squares rather than four. This was a real bug inherited from the predecessor. Classify rows by iterating runes, as `ConnectionsGame.ClassifyRow` does. Row width is also what tells a four-wide Connections grid from a five-wide Wordle one, which share two colours.
+
+**Runes are not enough for Strands.** Iterating runes suffices for Connections only because every Connections square is one code point. Strands grids are not: the 🇺🇸 spangram the New York Times used on 4 July is a regional indicator pair, two code points and four UTF-16 code units, so counting runes reports one item as two and finds two candidate spangrams instead of one. Enumerate text elements (`StringInfo.GetTextElementEnumerator`), as `StrandsGame.ReadRow` does, whenever a grid's items are not known to be single code points.
+
+**Strands items are classified by frequency, not by a fixed emoji set.** 💡 is the hint; of what is left, the repeated item is a theme word and the item appearing once is the spangram. The holiday grids swap 🔵 and 🟡 for something seasonal, so matching a fixed set would silently drop those shares.
 
 **Test player names are load-bearing in three ways.** `MarkdownReportRendererTests` asserts byte-exact column padding, and the padding follows the *displayed* name, so changing a *forename's* length breaks it. `PlayerNameShortener` shortens each name against the others it is rendered beside, so giving a test player a forename another one already has changes how both of them render. `LeaderboardBuilderTests` tie-breaks alphabetically, so changing a name's *ordinal order* breaks it. All three are deliberate; match the existing forenames, lengths and ordering when adding or renaming test players.
 
 **Periods are relative to the data, not to today.** The two most recent years and months *that hold results* are reported, so a chat that went quiet still reports on when it was last active. Tests rely on this; do not switch to `DateTime.Now`.
 
-**Connections needs at least one grid row.** A message naming a puzzle with no grid must be ignored, not scored zero.
+**Connections and Strands both need at least one grid row.** A message naming a puzzle with no grid must be ignored, not scored zero. In Strands the first row must be a full four items wide, but every row after it counts however short: 106 of the 136 shares in the export end in a remainder row, and some of those rows carry a hint, so dropping them reports games as cleaner than they were.
 
-**The Wordle summary line is anchored to the start of a line.** Prose mentioning a puzzle number does not count as a result.
+**The Wordle and Strands puzzle lines are anchored to the start of a line.** Prose mentioning a puzzle number does not count as a result. Connections is the exception, matching its `Puzzle #619` anywhere in the message.
 
 ## Privacy
 
@@ -52,4 +56,4 @@ The application is run against a private family WhatsApp chat. **No real partici
 
 This application replaced [WordleParser](https://github.com/ianfnelson/WordleParser) and [ConnectionsParser](https://github.com/ianfnelson/ConnectionsParser), and reproduced their output byte for byte until issue #5 shortened player names and sized the name column to fit them. The name column no longer matches, but the positions, played counts and averages still do. When changing parsing, grouping or rendering, run all three against the same export and diff the leaderboards, ignoring the name column. That check is what catches a regression the unit tests cannot see, and it is stronger than any assertion in the suite.
 
-Note that it stops being available altogether once the Connections scoring is deliberately changed, which is proposed in issue #2.
+Note that it stops being available altogether once the Connections scoring is deliberately changed, which is proposed in issue #2. It never covered Strands either, which has no predecessor application, so the Strands tables have to be checked against the export by hand.
