@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>GameChatParser.Cli</RootNamespace>
+    <AssemblyName>GameChatParser</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GameChatParser.Core\GameChatParser.Core.csproj" />
+  </ItemGroup>
+
+</Project>

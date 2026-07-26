@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/GameChatParser.Core/GameChatParser.Core.csproj" />
+    <Project Path="src/GameChatParser.Tests/GameChatParser.Tests.csproj" />
+    <Project Path="src/GameChatParser/GameChatParser.csproj" />
+  </Folder>
+</Solution>
