@@ -1,4 +1,5 @@
 using GameChatParser.Core.Games.Connections;
+using GameChatParser.Core.Games.Strands;
 using GameChatParser.Core.Games.Wordle;
 
 namespace GameChatParser.Core.Games;
@@ -13,6 +14,7 @@ public static class GameRegistry
     public static IReadOnlyList<IGame> Default { get; } =
     [
         new WordleGame(),
-        new ConnectionsGame()
+        new ConnectionsGame(),
+        new StrandsGame()
     ];
 }

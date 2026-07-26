@@ -7,9 +7,9 @@ current and previous year.
 It replaces two separate applications,
 [WordleParser](https://github.com/ianfnelson/WordleParser) and
 [ConnectionsParser](https://github.com/ianfnelson/ConnectionsParser), which did the same
-job one game at a time. Both games are now reported from a single run over a single
-export, and a third game can be added without touching the parsing, grouping, ranking or
-rendering code.
+job one game at a time. Wordle, Connections and Strands are now reported from a single run
+over a single export, and a fourth game can be added without touching the parsing,
+grouping, ranking or rendering code.
 
 There is more background on the original Wordle version at
 [Who Reigns Supreme? Parsing Our WhatsApp Chat For Wordle Glory](https://blog.iannelson.uk/who-reigns-supreme-parsing-our-whatsapp-chat-for-wordle-glory/).
@@ -39,10 +39,16 @@ the columns lined up:
 2. Joe       162   31.728
 3. Yvonne    148   30.750
 ```
+*Strands — 2026*
+```
+1. Carol     39     1.229
+2. Joe       40     1.288
+3. Katie     33     1.919
+```
 ````
 
 The columns are position, player, puzzles played in the period, and mean score. Tables
-are emitted in period order, with both games shown against each period: current year,
+are emitted in period order, with every game shown against each period: current year,
 previous year, current month, previous month.
 
 ### Names
@@ -177,6 +183,70 @@ often they lose than by how cleanly they win.
 
 **Dated** by adding the puzzle number to 11 June 2023, which puts Puzzle #619 on
 19 February 2025 and Puzzle #1 on 12 June 2023.
+
+## Strands
+
+Strands gives you a themed six-by-eight grid of letters, a clue, and a count of theme
+words to find. One of those words is the spangram, a word or short phrase naming the theme
+itself, which spans two opposite edges of the grid. Finding three words that are not theme
+words earns a hint, which lights up the letters of one theme word. A result is only shared
+for a completed puzzle, so there is no losing outcome to score, and as with Connections
+there is no summary line: the score has to be read out of the grid.
+
+**Recognised by** a line beginning `Strands #832`, followed by at least one row of the
+grid:
+
+```text
+Strands #832
+“Track event”
+🔵🟡🔵🔵
+🔵💡🔵🔵
+```
+
+A row is any line holding no letters or digits, which leaves the clue out of it, and the
+first must hold at least four items. The game wraps its grid four to a line and no puzzle
+holds fewer than five theme words, so every share opens with a full row; the rows after it
+count however short, since the last one is a remainder and carries hints like any other.
+The first line that is not a row ends the grid, so a remark typed underneath a share is
+not read as part of it.
+
+Items are classified by how often they appear rather than against a fixed set of emoji.
+💡 is the hint; of what remains, the item appearing repeatedly is a theme word and the one
+appearing once is the spangram. The New York Times swaps the set on holiday puzzles, as it
+did on 4 July, when 🎆 stood for the theme words and 🇺🇸 for the spangram, and counting
+frequencies reads that grid correctly without knowing anything about fireworks.
+
+**Scored** on the two things that separate one completed game from another, the hints
+taken and how late the spangram turned up:
+
+```
+score = hints + 0.5 × (k − 1) / (n − 1)
+```
+
+where `hints` is the number of 💡, `n` is the number of theme words found including the
+spangram, and `k` is the spangram's place among them. Hints are ignored when working out
+`k`, so taking one never moves the spangram's position.
+
+| Grid | Hints | Spangram | Score |
+| --- | --- | --- | --- |
+| `🟡🔵🔵🔵` `🔵🔵🔵🔵` | 0 | 1st of 8 | 0.000 |
+| `🔵🔵🔵🔵` `🔵🔵🟡` | 0 | 7th of 7 | 0.500 |
+| `💡🔵💡🔵` `💡🔵🔵🟡` `🔵` | 3 | 5th of 6 | 3.400 |
+| `💡🔵💡🔵` `💡🔵🟡🔵` `💡🔵` | 4 | 4th of 6 | 4.300 |
+
+**A lower average is better**, and a clean game with the spangram spotted first scores 0.
+Hints are the primary measure, one point each, on the same principle as the rest of the
+scoring here: count what went wrong. The spangram term is the tie-break, and it is capped
+at half a hint deliberately, so the whole distance between finding the spangram first and
+finding it last is worth less than a single hint. Hint discipline therefore always decides
+the order, and the bonus can only separate players who are already level on hints.
+
+Dividing by `n − 1` gives every puzzle the same 0 to 1 span whether it holds five theme
+words or nine, so a short puzzle is neither easier nor harder to score well on than a long
+one.
+
+**Dated** by adding the puzzle number to 3 March 2024, which puts Strands #1 on
+4 March 2024, the day the game entered beta, and Strands #764 on 6 April 2026.
 
 ## Adding another game
 
