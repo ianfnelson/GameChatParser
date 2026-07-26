@@ -15,7 +15,7 @@ public class MarkdownReportRendererTests
             """
             *Wordle — July*
             ```
-            1. Joe Whelan        26    4.423
+            1. Joe     26    4.423
             ```
 
             """,
@@ -36,9 +36,9 @@ public class MarkdownReportRendererTests
             """
             *Wordle — 2025*
             ```
-            1. Nadia Corbin      33    3.273
-            2. Carol Whelan     365    3.819
-            3. Rosalind Ferrer  229    4.445
+            1. Nadia        33    3.273
+            2. Carol       365    3.819
+            3. Rosalind    229    4.445
             ```
 
             """,
@@ -59,9 +59,9 @@ public class MarkdownReportRendererTests
             """
             *Wordle — July*
             ```
-            1= Ana               10    4.000
-            1= Bea               10    4.000
-            3. Theo              10    5.000
+            1= Ana      10    4.000
+            1= Bea      10    4.000
+            3. Theo     10    5.000
             ```
 
             """,
@@ -69,14 +69,99 @@ public class MarkdownReportRendererTests
     }
 
     [Fact]
-    public void Widens_the_name_column_to_fit_a_long_name()
+    public void Leaves_three_spaces_between_the_longest_name_and_the_scores()
     {
         var output = Render(Board(
             "Wordle",
             "July",
-            Entry(1, false, "Bartholomew Cuthbertson", 10, 4d)));
+            Entry(1, false, "Ana", 10, 4d),
+            Entry(2, false, "Bartholomew", 10, 5d)));
 
-        Assert.Contains("1. Bartholomew Cuthbertson   10    4.000", output, StringComparison.Ordinal);
+        Assert.Equal(
+            """
+            *Wordle — July*
+            ```
+            1. Ana             10    4.000
+            2. Bartholomew     10    5.000
+            ```
+
+            """,
+            output);
+    }
+
+    [Fact]
+    public void Shows_a_player_by_forename_alone()
+    {
+        var output = Render(Board("Wordle", "July", Entry(1, false, "Bartholomew Cuthbertson", 10, 4d)));
+
+        Assert.Contains("1. Bartholomew     10    4.000", output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Adds_a_surname_initial_where_a_forename_is_shared()
+    {
+        var output = Render(Board(
+            "Wordle",
+            "July",
+            Entry(1, false, "Joe Whelan", 10, 4d),
+            Entry(2, false, "Joe Corbin", 10, 5d),
+            Entry(3, false, "Ana Corbin", 10, 6d)));
+
+        Assert.Equal(
+            """
+            *Wordle — July*
+            ```
+            1. Joe W.     10    4.000
+            2. Joe C.     10    5.000
+            3. Ana        10    6.000
+            ```
+
+            """,
+            output);
+    }
+
+    [Fact]
+    public void Falls_back_to_whole_names_where_a_surname_initial_is_shared_too()
+    {
+        var output = Render(Board(
+            "Wordle",
+            "July",
+            Entry(1, false, "Joe Whelan", 10, 4d),
+            Entry(2, false, "Joe Wright", 10, 5d),
+            Entry(3, false, "Ana Wright", 10, 6d)));
+
+        Assert.Equal(
+            """
+            *Wordle — July*
+            ```
+            1. Joe Whelan     10    4.000
+            2. Joe Wright     10    5.000
+            3. Ana            10    6.000
+            ```
+
+            """,
+            output);
+    }
+
+    [Fact]
+    public void Shortens_names_against_the_whole_report_rather_than_one_table()
+    {
+        var report = new Report
+        {
+            Leaderboards =
+            [
+                Board("Wordle", "2026", Entry(1, false, "Joe Whelan", 1, 4d)),
+                Board("Connections", "2026", Entry(1, false, "Joe Corbin", 1, 40d))
+            ]
+        };
+
+        var writer = new StringWriter { NewLine = "\n" };
+        _renderer.Render(report, writer);
+
+        // Joe is alone on each table, but sharing a forename across the report is enough
+        // for both to keep their initial.
+        Assert.Contains("1. Joe W.", writer.ToString(), StringComparison.Ordinal);
+        Assert.Contains("1. Joe C.", writer.ToString(), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -92,8 +177,8 @@ public class MarkdownReportRendererTests
             """
             *Wordle — July*
             ```
-            1.  Ana               10    4.000
-            10. Theo              10    5.000
+            1.  Ana      10    4.000
+            10. Theo     10    5.000
             ```
 
             """,
@@ -113,8 +198,8 @@ public class MarkdownReportRendererTests
             """
             *Connections — July*
             ```
-            1. Ana               10   24.500
-            2. Theo            1000   -4.000
+            1. Ana      10   24.500
+            2. Theo   1000   -4.000
             ```
 
             """,

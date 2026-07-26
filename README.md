@@ -29,21 +29,38 @@ the columns lined up:
 ````text
 *Wordle — 2026*
 ```
-1. Nadia Corbin     207    3.928
-2. Carol Whelan     207    3.981
-3. Katie Munro      199    4.146
+1. Nadia    207    3.928
+2. Carol    207    3.981
+3. Katie    199    4.146
 ```
 *Connections — 2026*
 ```
-1. Nadia Corbin     207   35.570
-2. Joe Whelan       162   31.728
-3. Yvonne Clarke    148   30.750
+1. Nadia     207   35.570
+2. Joe       162   31.728
+3. Yvonne    148   30.750
 ```
 ````
 
 The columns are position, player, puzzles played in the period, and mean score. Tables
 are emitted in period order, with both games shown against each period: current year,
 previous year, current month, previous month.
+
+### Names
+
+A phone screen has little horizontal room, so players are shown by forename alone
+wherever that is enough to tell them apart. Where a forename is shared, everybody
+sharing it gains a surname initial, and where that still leaves two of them looking
+alike, they are all shown under their whole name:
+
+```
+1. Nadia       207    3.928
+2. Carol W.    207    3.981
+3. Carol M.    199    4.146
+```
+
+Names are shortened against the whole report rather than one table at a time, so a
+player reads the same way wherever they turn up in it. The name column then takes only
+the room the longest name on that table needs, leaving three spaces before the scores.
 
 Player names in this document, and in the test suite, are invented. The application is
 run against a private family chat, so no real participant is named here.
@@ -71,7 +88,8 @@ score, knows anything about a particular game.
 6. **Rank.** Within a period, each player's scores are averaged, and the players are
    sorted by that average. Ranking is by mean rather than total, so somebody who misses a
    fortnight is not punished for it.
-7. **Render.** Each table is written as a bold heading above a fenced block.
+7. **Render.** Names are shortened to the shortest form that still tells the players
+   apart, and each table is written as a bold heading above a fenced block.
 
 ### Positions and ties
 
@@ -79,10 +97,10 @@ Positions use standard competition ranking. Players with the same average share 
 position, marked with `=` instead of `.`, and the positions they consume are skipped:
 
 ```
-1. Carol Whelan      26    3.885
-2= Nadia Corbin      26    4.154
-2= Yvonne Clarke     24    4.154
-4. Joe Whelan        26    4.423
+1. Carol      26    3.885
+2= Nadia      26    4.154
+2= Yvonne     24    4.154
+4. Joe        26    4.423
 ```
 
 Two averages count as equal when they differ by less than 0.0001, since averages that
