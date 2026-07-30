@@ -77,12 +77,12 @@ public class ReportBuilderTests
     }
 
     [Fact]
-    public void Ranks_connections_on_the_most_points()
+    public void Ranks_connections_on_the_fewest_faults()
     {
         var december = Find(Build(SampleChat), "Connections — December");
 
         Assert.Equal(["Joe Whelan", "Carol Whelan"], december.Entries.Select(entry => entry.Player));
-        Assert.Equal([40d, 39d], december.Entries.Select(entry => entry.Average));
+        Assert.Equal([0d, 1d], december.Entries.Select(entry => entry.Average));
     }
 
     [Fact]
@@ -91,7 +91,7 @@ public class ReportBuilderTests
         var report = Build(SampleChat);
 
         Assert.Equal(2, Find(report, "Wordle — January").Entries.Count);
-        Assert.Equal(-4d, Assert.Single(Find(report, "Connections — January").Entries).Average);
+        Assert.Equal(8d, Assert.Single(Find(report, "Connections — January").Entries).Average);
     }
 
     [Fact]
@@ -121,7 +121,7 @@ public class ReportBuilderTests
             """);
 
         Assert.Equal(3d, Assert.Single(Find(report, "Wordle — December").Entries).Average);
-        Assert.Equal(40d, Assert.Single(Find(report, "Connections — December").Entries).Average);
+        Assert.Equal(0d, Assert.Single(Find(report, "Connections — December").Entries).Average);
     }
 
     [Fact]

@@ -35,9 +35,9 @@ the columns lined up:
 ```
 *Connections — 2026*
 ```
-1. Nadia     207   35.570
-2. Joe       162   31.728
-3. Yvonne    148   30.750
+1. Nadia     207    1.952
+2. Joe       162    2.327
+3. Yvonne    148    2.622
 ```
 *Strands — 2026*
 ```
@@ -149,37 +149,41 @@ is any line holding exactly four Connections squares, which are 🟨 yellow, �
 🟦 blue and 🟪 purple. Width is what tells a Connections grid from a Wordle one: Wordle
 shares two of the same colours but its rows are five squares wide.
 
-**Scored** by reading each row of the grid:
+**Scored** by counting everything that went wrong, reading each row of the grid:
 
 | Row | Meaning | Points |
 | --- | --- | --- |
-| Four identical squares | a group solved | +10 |
-| Any other four squares | a wrong guess | −1 |
+| Four identical squares | a group solved | 0 |
+| Any other four squares | a wrong guess | +1 |
 
-so that:
+and charging a further point for each group that was never found:
 
 ```
-score = (10 × groups solved) − mistakes
+score = mistakes + (4 − groups solved)
 ```
 
-**A higher average is better.** Only seven scores are actually reachable, because solving
-three groups completes the fourth for you, so a game can never end with three groups and
-a loss:
+**A lower average is better**, and a flawless win scores 0, on the same principle as the
+rest of the scoring here: count what went wrong. Only seven scores are actually reachable,
+because solving three groups completes the fourth for you, so a game can never end with
+three groups and a loss:
 
 | Outcome | Groups | Mistakes | Score |
 | --- | --- | --- | --- |
-| Won, flawless | 4 | 0 | 40 |
-| Won | 4 | 1 | 39 |
-| Won | 4 | 2 | 38 |
-| Won, on the last life | 4 | 3 | 37 |
-| Lost, two groups found | 2 | 4 | 16 |
-| Lost, one group found | 1 | 4 | 6 |
-| Lost, nothing found | 0 | 4 | −4 |
+| Won, flawless | 4 | 0 | 0 |
+| Won | 4 | 1 | 1 |
+| Won | 4 | 2 | 2 |
+| Won, on the last life | 4 | 3 | 3 |
+| Lost, two groups found | 2 | 4 | 6 |
+| Lost, one group found | 1 | 4 | 7 |
+| Lost, nothing found | 0 | 4 | 8 |
 
-Winning always beats losing however untidily it was done. Note that the scale is not
-evenly spread: the four winning scores sit within three points of each other, while the
-losing scores are spread over twenty, so a player's average is driven far more by how
-often they lose than by how cleanly they win.
+Winning always beats losing however untidily it was done, since a three point gap
+separates the worst win from the best loss. The scale is otherwise deliberately even: a
+three point band across the wins and a two point one across the losses, so how cleanly a
+player wins counts for about as much as how often they lose. The earlier scoring, carried
+over from `ConnectionsParser`, was `(10 × groups solved) − mistakes`, which spread the
+losses over twenty points and the wins over three, and so measured little beyond the loss
+rate.
 
 **Dated** by adding the puzzle number to 11 June 2023, which puts Puzzle #619 on
 19 February 2025 and Puzzle #1 on 12 June 2023.

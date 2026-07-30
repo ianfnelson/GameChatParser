@@ -13,18 +13,21 @@ namespace GameChatParser.Core.Games.Connections;
 /// </summary>
 public sealed partial class ConnectionsGame : PuzzleGame
 {
-    /// <summary>Points awarded for each of the four groups a player solves.</summary>
-    public const int PointsPerGroupSolved = 10;
+    /// <summary>The number of groups a puzzle holds, and so the number a player can miss.</summary>
+    public const int GroupsPerPuzzle = 4;
 
-    /// <summary>Points deducted for each wrong guess.</summary>
+    /// <summary>Points charged for each wrong guess.</summary>
     public const int PenaltyPerMistake = 1;
+
+    /// <summary>Points charged for each group the player never found.</summary>
+    public const int PenaltyPerGroupMissed = 1;
 
     /// <summary>The number of squares in a row of the shared grid, one per selected word.</summary>
     private const int SquaresPerRow = 4;
 
     public override string Name => "Connections";
 
-    public override RankingDirection RankingDirection => RankingDirection.HigherIsBetter;
+    public override RankingDirection RankingDirection => RankingDirection.LowerIsBetter;
 
     /// <summary>
     /// Calibrated so that Puzzle #619 falls on 19 February 2025, the day it was shared,
@@ -55,7 +58,11 @@ public sealed partial class ConnectionsGame : PuzzleGame
 
         var groupsSolved = rows.Count(row => row == RowKind.GroupSolved);
         var mistakes = rows.Count - groupsSolved;
-        var score = (PointsPerGroupSolved * groupsSolved) - (PenaltyPerMistake * mistakes);
+
+        // Everything that went wrong, counted once each: the wrong guesses made, and the
+        // groups left unfound. A flawless win therefore scores zero and lower is better.
+        var score = (PenaltyPerMistake * mistakes) +
+                    (PenaltyPerGroupMissed * (GroupsPerPuzzle - groupsSolved));
 
         return new GameScore(message.Sender, puzzleNumber, DateOfPuzzle(puzzleNumber), score);
     }
