@@ -8,14 +8,14 @@ public class ConnectionsGameTests
     private readonly ConnectionsGame _game = new();
 
     [Fact]
-    public void Is_ranked_on_the_highest_average()
+    public void Is_ranked_on_the_lowest_average()
     {
         Assert.Equal("Connections", _game.Name);
-        Assert.Equal(RankingDirection.HigherIsBetter, _game.RankingDirection);
+        Assert.Equal(RankingDirection.LowerIsBetter, _game.RankingDirection);
     }
 
     [Fact]
-    public void Scores_a_flawless_game_at_ten_points_a_group()
+    public void Scores_a_flawless_game_at_nothing()
     {
         var score = Parse(
             """
@@ -28,11 +28,11 @@ public class ConnectionsGameTests
             """);
 
         Assert.NotNull(score);
-        Assert.Equal(40, score.Value);
+        Assert.Equal(0, score.Value);
     }
 
     [Fact]
-    public void Deducts_a_point_for_a_single_mistake()
+    public void Charges_a_point_for_a_single_mistake()
     {
         var score = Parse(
             """
@@ -46,11 +46,11 @@ public class ConnectionsGameTests
             """);
 
         Assert.NotNull(score);
-        Assert.Equal(39, score.Value);
+        Assert.Equal(1, score.Value);
     }
 
     [Fact]
-    public void Deducts_a_point_for_every_mistake()
+    public void Charges_a_point_for_every_mistake()
     {
         var score = Parse(
             """
@@ -65,7 +65,7 @@ public class ConnectionsGameTests
             """);
 
         Assert.NotNull(score);
-        Assert.Equal(38, score.Value);
+        Assert.Equal(2, score.Value);
     }
 
     [Fact]
@@ -85,12 +85,12 @@ public class ConnectionsGameTests
             """);
 
         Assert.NotNull(score);
-        Assert.Equal((4 * ConnectionsGame.PointsPerGroupSolved) - (3 * ConnectionsGame.PenaltyPerMistake), score.Value);
-        Assert.Equal(37, score.Value);
+        Assert.Equal(3 * ConnectionsGame.PenaltyPerMistake, score.Value);
+        Assert.Equal(3, score.Value);
     }
 
     [Fact]
-    public void Scores_a_game_lost_after_three_groups()
+    public void Scores_a_game_lost_after_two_groups()
     {
         var score = Parse(
             """
@@ -102,12 +102,34 @@ public class ConnectionsGameTests
             🟪🟪🟨🟪
             🟨🟨🟨🟨
             🟩🟩🟩🟩
-            🟦🟦🟦🟦
             """);
 
         Assert.NotNull(score);
-        Assert.Equal((3 * ConnectionsGame.PointsPerGroupSolved) - (4 * ConnectionsGame.PenaltyPerMistake), score.Value);
-        Assert.Equal(26, score.Value);
+        Assert.Equal(
+            (4 * ConnectionsGame.PenaltyPerMistake) + (2 * ConnectionsGame.PenaltyPerGroupMissed),
+            score.Value);
+        Assert.Equal(6, score.Value);
+    }
+
+    [Fact]
+    public void Scores_a_game_lost_after_one_group()
+    {
+        var score = Parse(
+            """
+            Connections
+            Puzzle #620
+            🟨🟨🟨🟪
+            🟩🟩🟩🟦
+            🟦🟦🟨🟦
+            🟪🟪🟨🟪
+            🟨🟨🟨🟨
+            """);
+
+        Assert.NotNull(score);
+        Assert.Equal(
+            (4 * ConnectionsGame.PenaltyPerMistake) + (3 * ConnectionsGame.PenaltyPerGroupMissed),
+            score.Value);
+        Assert.Equal(7, score.Value);
     }
 
     [Fact]
@@ -124,7 +146,11 @@ public class ConnectionsGameTests
             """);
 
         Assert.NotNull(score);
-        Assert.Equal(-4, score.Value);
+        Assert.Equal(
+            (4 * ConnectionsGame.PenaltyPerMistake) +
+            (ConnectionsGame.GroupsPerPuzzle * ConnectionsGame.PenaltyPerGroupMissed),
+            score.Value);
+        Assert.Equal(8, score.Value);
     }
 
     [Theory]
@@ -177,7 +203,7 @@ public class ConnectionsGameTests
             """);
 
         Assert.NotNull(score);
-        Assert.Equal(-4, score.Value);
+        Assert.Equal(8, score.Value);
     }
 
     [Fact]
