@@ -249,6 +249,91 @@ public class LeaderboardBuilderTests
     }
 
     [Fact]
+    public void Ranks_a_game_on_what_its_normalisation_step_returns()
+    {
+        var scores = new[]
+        {
+            Score("Ana", new DateOnly(2026, 7, 1), 3),
+            Score("Bea", new DateOnly(2026, 7, 1), 4)
+        };
+
+        // Standing in for a game that rewrites its scores and drops some of them.
+        var game = new FakeNormalisingGame(
+            normalise: given => [.. given
+                .Where(score => score.Player == "Ana")
+                .Select(score => score with { Value = score.Value * 10 })]);
+
+        var entry = Assert.Single(YearFrom(game, scores).Entries);
+
+        Assert.Equal("Ana", entry.Player);
+        Assert.Equal(30d, entry.Average);
+    }
+
+    [Fact]
+    public void Normalises_a_game_once_the_repeats_are_gone()
+    {
+        // A player who posted the same result twice would otherwise appear twice in that
+        // puzzle's field and shift the baseline for everybody else.
+        var scores = new[]
+        {
+            Score("Bea", new DateOnly(2026, 7, 1), 3),
+            Score("Bea", new DateOnly(2026, 7, 1), 6)
+        };
+
+        var normalised = new List<IReadOnlyList<GameScore>>();
+        var game = new FakeNormalisingGame(normalise: given =>
+        {
+            normalised.Add(given);
+            return given;
+        });
+
+        _builder.Build(game, scores);
+
+        Assert.All(normalised, given => Assert.Equal([3d], given.Select(score => score.Value)));
+    }
+
+    [Fact]
+    public void Normalises_a_game_before_splitting_it_into_periods()
+    {
+        // Every period has to be built from the same normalised scores, or a player would
+        // read differently in the yearly table than in the monthly one.
+        var scores = new[]
+        {
+            Score("Bea", new DateOnly(2026, 6, 1), 3),
+            Score("Bea", new DateOnly(2026, 7, 1), 4)
+        };
+
+        var calls = 0;
+        var game = new FakeNormalisingGame(normalise: given =>
+        {
+            calls++;
+            Assert.Equal([3d, 4d], given.Select(score => score.Value));
+            return given;
+        });
+
+        _builder.Build(game, scores);
+
+        Assert.Equal(1, calls);
+    }
+
+    [Fact]
+    public void Summarises_a_players_period_the_way_the_game_asks()
+    {
+        var scores = new[]
+        {
+            Score("Bea", new DateOnly(2026, 7, 1), 3),
+            Score("Bea", new DateOnly(2026, 7, 2), 5)
+        };
+
+        var game = new FakeNormalisingGame(summarise: given => given.Max(score => score.Value));
+
+        var entry = Assert.Single(YearFrom(game, scores).Entries);
+
+        Assert.Equal(2, entry.Played);
+        Assert.Equal(5d, entry.Average);
+    }
+
+    [Fact]
     public void Rejects_a_null_game_or_null_scores()
     {
         Assert.Throws<ArgumentNullException>(() => _builder.Build(null!, []));

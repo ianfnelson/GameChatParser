@@ -7,9 +7,9 @@ current and previous year.
 It replaces two separate applications,
 [WordleParser](https://github.com/ianfnelson/WordleParser) and
 [ConnectionsParser](https://github.com/ianfnelson/ConnectionsParser), which did the same
-job one game at a time. Wordle, Connections and Strands are now reported from a single run
-over a single export, and a fourth game can be added without touching the parsing,
-grouping, ranking or rendering code.
+job one game at a time. Wordle, Connections, Strands and both Zanagrams puzzles are now
+reported from a single run over a single export, and a further game can be added without
+touching the parsing, grouping, ranking or rendering code.
 
 There is more background on the original Wordle version at
 [Who Reigns Supreme? Parsing Our WhatsApp Chat For Wordle Glory](https://blog.iannelson.uk/who-reigns-supreme-parsing-our-whatsapp-chat-for-wordle-glory/).
@@ -45,11 +45,18 @@ the columns lined up:
 2. Joe       40     1.288
 3. Katie     33     1.919
 ```
+*Zanagrams — 2026*
+```
+1. Joe       25     0.647
+2. Nadia     24     0.751
+3. Katie     19     1.311
+```
 ````
 
-The columns are position, player, puzzles played in the period, and mean score. Tables
-are emitted in period order, with every game shown against each period: current year,
-previous year, current month, previous month.
+The columns are position, player, puzzles played in the period, and the figure the game is
+ranked on, which for most of them is a mean score. Tables are emitted in period order, with
+every game shown against each period: current year, previous year, current month, previous
+month.
 
 ### Names
 
@@ -87,14 +94,20 @@ score, knows anything about a particular game.
    their Friday puzzle counted against Friday.
 4. **Discard repeats.** A player counts once per puzzle, however many times they post it.
    The first posting wins.
-5. **Group into periods.** Scores are grouped by calendar year and by calendar month, and
+5. **Settle the relative scores.** Most games score a result on its own terms and skip
+   this step. A game ranked against the day's field, as Zanagrams is, gets its whole set
+   of scores here and returns the set it should be ranked on, which lets it rewrite them
+   against each other and drop the ones it cannot rank. It happens once, after the repeats
+   have gone and before the periods are split out, so that a day's field is the whole
+   day's field.
+6. **Group into periods.** Scores are grouped by calendar year and by calendar month, and
    the two most recent of each that hold any results are reported. Periods are relative to
    the data, not to today's date, so a chat that went quiet in March still reports on
    March.
-6. **Rank.** Within a period, each player's scores are averaged, and the players are
-   sorted by that average. Ranking is by mean rather than total, so somebody who misses a
-   fortnight is not punished for it.
-7. **Render.** Names are shortened to the shortest form that still tells the players
+7. **Rank.** Within a period, each player's scores are reduced to one figure, by default
+   their mean, and the players are sorted by it. Ranking is by mean rather than total, so
+   somebody who misses a fortnight is not punished for it.
+8. **Render.** Names are shortened to the shortest form that still tells the players
    apart, and each table is written as a bold heading above a fenced block.
 
 ### Positions and ties
@@ -252,7 +265,109 @@ one.
 **Dated** by adding the puzzle number to 3 March 2024, which puts Strands #1 on
 4 March 2024, the day the game entered beta, and Strands #764 on 6 April 2026.
 
-## Adding another game
+## Zanagrams
+
+[Zanagrams](https://zanagrams.com/) gives you a cluster of letters joined by paths and a
+clue for each word to find. You trace a word by dragging along the paths, the letters you
+used disappear, and the grid collapses inwards until every word is found. A hint reveals
+the next group of letters in a word. A result is only shared for a completed puzzle, so as
+with Strands there is no losing outcome to score.
+
+There are two puzzles a day, an Original and a harder Master, sharing a puzzle number and
+a share format. They are **two games here rather than one**, because they are not the same
+game and they are not played by the same people: one player takes the Original every day and
+has never touched the Master, so a combined table would rank them against a field they never
+met.
+
+**Recognised by** a heading naming the puzzle, `Zanagrams #12` for the Original and
+`Zanagrams Master #12` for the Master, above the time it was solved in:
+
+```text
+Zanagrams #12
+
+🎉 Solved in 01:22
+
+🚀 02:02 faster than global average
+
+💡 0 hints used
+
+https://zanagrams.com/
+```
+
+The heading is anchored to the start of a line, so prose mentioning a puzzle number is not
+read as a share, and each game's heading is written so that it cannot match the other's.
+The game wrote `Complete in` before it settled on `Solved in`, and the earliest shares carry
+no `💡` line at all; both older forms parse, and a missing hint line counts as no hints. A
+message naming a puzzle with no time to read is ignored rather than scored, on the same
+principle as a Connections message with no grid. No failed or abandoned result appears in
+the export, so the format for one, if there is one, is unknown.
+
+**The `🚀` line is deliberately ignored.** It only ever appears when the player beat the
+global average, so it is missing from 63 of the export's 156 shares, and it is missing
+precisely for the slower results, which is the least useful way for data to be absent. The
+figure it reports also drifts through the day as more people play: three players sharing
+the same puzzle implied global averages of 196, 204 and 208 seconds. A share carrying the
+line scores exactly what the same share without it would.
+
+### Why the score is relative
+
+Wordle and Connections both share a figure that means the same thing on every day of the
+year: four guesses is four guesses, and a player's scores can simply be averaged. A
+Zanagrams solve time means nothing on its own, because it is mostly a measure of how hard
+that day's puzzle was. The export's times run from 41 seconds to nearly 22 minutes, and
+most of that spread is the puzzle rather than the player. Averaging raw times would rank
+whoever happened to play on the easy days, and would quietly reward anyone who declined to
+post a bad one.
+
+So a result is scored against the rest of that puzzle's field. **Scored** in four steps:
+
+1. **Charge the hints**, at 20 seconds each, giving an adjusted time.
+2. **Drop the uncontested puzzles.** A puzzle only one player posted has nobody to compare
+   against.
+3. **Compare against the rest of the field.** A player's score for a puzzle is the ratio of
+   their adjusted time to the geometric mean of the *other* players' adjusted times for the
+   same puzzle, held as a logarithm.
+4. **Average, then convert back.** A player's figure for a period is the exponentiated mean
+   of those logarithms.
+
+```
+score  = log(own adjusted time) − mean(log(each other player's adjusted time))
+figure = exp(mean(score))
+```
+
+The result reads as a pace index. **A lower figure is better**: `1.000` is family par, and
+`0.647` means the player typically solves in about 65% of the time the rest of the family
+needs.
+
+Hints cost 20 seconds because a hint is a partial reveal rather than a solved word, and the
+family already treats it as a last resort: of the 148 shares reporting their hints, 137 took
+none, 9 took one and 2 took two. The penalty is big enough that buying a hint cannot buy a
+better placing, and small enough that one hint does not wreck a month. At 20 seconds no
+result in the export changes position.
+
+Three details are worth stating, because each is easy to get wrong:
+
+**Why the geometric mean, and why logarithms.** With plain ratios the scale is lopsided:
+solving in half the time would score 0.5, half a point below par, while taking twice as long
+would score 2.0, a whole point above it, so bad days would count double. That matters here
+because the times span more than an order of magnitude. In log space the two are symmetric,
+and a hard puzzle that inflates everybody's time cancels out exactly.
+
+**Why the field excludes the player.** Measuring against a baseline that includes your own
+time lets your own result set part of the bar you are judged against, which flattens both
+very good and very bad days, and flattens them more the fewer players posted. Leaving
+yourself out makes the figure mean the same thing whether two players posted or four.
+
+**Why uncontested puzzles vanish.** A puzzle only one player posted counts towards nobody's
+figure and towards nobody's `Played` count, so `Played` always matches the sample the figure
+was built from. That costs 7 of the export's 33 Original puzzles and 1 of its 22 Master
+ones, nearly all of them in the first week before the rest of the family took the game up.
+
+**Dated** by adding the puzzle number to 23 June 2026, which puts Zanagrams #1 on 24 June
+2026. Both puzzles of a day share a number and so share a date.
+
+Because a pace index is continuous rather than a mean of small integers, the tie handling
+described above will effectively never be exercised by these two tables.
 
 Implement `IGame` and register it. Nothing else changes.
 
@@ -278,6 +393,31 @@ arithmetic with it; a game dated some other way can implement `IGame` directly.
 
 The grouping, ranking, tie handling and rendering are all game agnostic, and read a game
 only through `Name` and `RankingDirection`.
+
+### Games whose score is relative
+
+`IGame` carries two more members, both of which default to doing nothing interesting, for a
+game whose result cannot be scored while reading a single message:
+
+| Member | Default | Called |
+| --- | --- | --- |
+| `Normalise(scores)` | returns them untouched | once, on the game's whole set of scores |
+| `Summarise(scores)` | their mean | once per player per period |
+
+`Normalise` is where Zanagrams turns solve times into pace indices, and where it drops the
+puzzles it cannot rank. It runs after the repeats have been discarded and before the scores
+are grouped into periods, and both halves of that matter: a player who posted the same
+result twice would otherwise appear twice in a puzzle's field and shift the baseline for
+everybody else, and a game normalised period by period would give a player one figure in
+the yearly table and another in the monthly one.
+
+`Summarise` is where Zanagrams exponentiates the mean of its logarithms, since the geometric
+mean the score is defined against is not an arithmetic mean of anything.
+
+`PuzzleGame` restates both defaults as `virtual` methods, so that a game deriving from it
+can override them. This is not decoration: a default interface member is not inherited as a
+virtual one, so without the restatement a puzzle game declaring its own `Normalise` would
+compile and then quietly never be called.
 
 ## Project layout
 

@@ -1,6 +1,7 @@
 using GameChatParser.Core.Games.Connections;
 using GameChatParser.Core.Games.Strands;
 using GameChatParser.Core.Games.Wordle;
+using GameChatParser.Core.Games.Zanagrams;
 
 namespace GameChatParser.Core.Games;
 
@@ -15,6 +16,8 @@ public static class GameRegistry
     [
         new WordleGame(),
         new ConnectionsGame(),
-        new StrandsGame()
+        new StrandsGame(),
+        new ZanagramsOriginalGame(),
+        new ZanagramsMasterGame()
     ];
 }

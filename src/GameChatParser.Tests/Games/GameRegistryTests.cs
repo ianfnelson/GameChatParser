@@ -2,6 +2,7 @@ using GameChatParser.Core.Games;
 using GameChatParser.Core.Games.Connections;
 using GameChatParser.Core.Games.Strands;
 using GameChatParser.Core.Games.Wordle;
+using GameChatParser.Core.Games.Zanagrams;
 
 namespace GameChatParser.Tests.Games;
 
@@ -14,7 +15,9 @@ public class GameRegistryTests
             GameRegistry.Default,
             game => Assert.IsType<WordleGame>(game),
             game => Assert.IsType<ConnectionsGame>(game),
-            game => Assert.IsType<StrandsGame>(game));
+            game => Assert.IsType<StrandsGame>(game),
+            game => Assert.IsType<ZanagramsOriginalGame>(game),
+            game => Assert.IsType<ZanagramsMasterGame>(game));
     }
 
     [Fact]
