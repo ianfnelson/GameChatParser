@@ -22,4 +22,26 @@ public interface IGame
     /// an implementation must recognise only its own format.
     /// </summary>
     GameScore? TryParseScore(ChatMessage message);
+
+    /// <summary>
+    /// Replaces this game's scores with the ones it should be ranked on, which by default
+    /// are the ones it parsed. A game whose result only means something next to the rest
+    /// of that puzzle's field cannot work its score out while reading a single message,
+    /// and this is where it gets to; it may rewrite scores and drop them.
+    /// </summary>
+    /// <remarks>
+    /// Called once per game, after the repeats have been dropped and before anything is
+    /// grouped into periods. Both halves of that matter: a player who posted the same
+    /// result twice would otherwise appear twice in a puzzle's field, and a game rewritten
+    /// period by period would give a player one figure in the yearly table and another in
+    /// the monthly one.
+    /// </remarks>
+    IReadOnlyList<GameScore> Normalise(IReadOnlyList<GameScore> scores) => scores;
+
+    /// <summary>
+    /// Reduces one player's scores for one period to the single figure they are ranked and
+    /// printed on, which by default is their mean. Ranking by mean rather than by total is
+    /// what keeps somebody who misses a fortnight from being punished for it.
+    /// </summary>
+    double Summarise(IReadOnlyList<GameScore> scores) => scores.Average(score => score.Value);
 }

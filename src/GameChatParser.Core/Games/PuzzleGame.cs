@@ -26,4 +26,22 @@ public abstract class PuzzleGame : IGame
     public DateOnly DateOfPuzzle(int puzzleNumber) => PuzzleZeroDate.AddDays(puzzleNumber);
 
     public abstract GameScore? TryParseScore(ChatMessage message);
+
+    /// <inheritdoc cref="IGame.Normalise"/>
+    /// <remarks>
+    /// Restates <see cref="IGame"/>'s default so that a derived game can override it. A
+    /// default interface member is not inherited as a virtual one, so without this a
+    /// puzzle game declaring its own <c>Normalise</c> would compile and then quietly never
+    /// be called.
+    /// </remarks>
+    public virtual IReadOnlyList<GameScore> Normalise(IReadOnlyList<GameScore> scores) => scores;
+
+    /// <inheritdoc cref="IGame.Summarise"/>
+    /// <remarks>Restates <see cref="IGame"/>'s default, for the reason given above.</remarks>
+    public virtual double Summarise(IReadOnlyList<GameScore> scores)
+    {
+        ArgumentNullException.ThrowIfNull(scores);
+
+        return scores.Average(score => score.Value);
+    }
 }

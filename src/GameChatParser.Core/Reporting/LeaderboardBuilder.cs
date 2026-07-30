@@ -37,7 +37,12 @@ public sealed class LeaderboardBuilder
             .DistinctBy(score => (score.Player, score.Date))
             .ToList();
 
-        var years = distinct
+        // A game ranked against the day's field rather than against a fixed scale settles
+        // its scores here, with the repeats already gone and the periods not yet split
+        // out, so that a day's field is the whole day's field.
+        var ranked = game.Normalise(distinct);
+
+        var years = ranked
             .GroupBy(score => score.Date.Year)
             .OrderByDescending(group => group.Key)
             .Take(PeriodsPerKind)
@@ -48,7 +53,7 @@ public sealed class LeaderboardBuilder
                 index,
                 group));
 
-        var months = distinct
+        var months = ranked
             .GroupBy(score => (score.Date.Year, score.Date.Month))
             .OrderByDescending(group => group.Key.Year)
             .ThenByDescending(group => group.Key.Month)
@@ -76,7 +81,7 @@ public sealed class LeaderboardBuilder
             {
                 Player = player.Key,
                 Played = player.Count(),
-                Average = player.Average(score => score.Value)
+                Average = game.Summarise([.. player])
             })
             .ToList();
 
