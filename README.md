@@ -27,36 +27,37 @@ The output is ready to paste straight back into the chat, where the fenced block
 the columns lined up:
 
 ````text
-*Wordle — 2026*
-```
-1. Nadia    207    3.928
-2. Carol    207    3.981
-3. Katie    199    4.146
-```
 *Connections — 2026*
 ```
-1. Nadia     207    1.952
-2. Joe       162    2.327
-3. Yvonne    148    2.622
+1. Nadia     213    2.005
+2. Joe       168    2.298
+3. Yvonne    152    2.592
 ```
-*Strands — 2026*
+*Connections — 2025*
 ```
-1. Carol     39     1.229
-2. Joe       40     1.288
-3. Katie     33     1.919
+1. Nadia       33    1.121
+2. Yvonne     180    1.856
+3. Joe        276    2.174
 ```
-*Zanagrams — 2026*
+*Connections — August*
 ```
-1. Joe       25     0.647
-2. Nadia     24     0.751
-3. Katie     19     1.311
+1. Nadia       1    0.000
+2. Carol       1    1.000
+3. Joe         1    2.000
+```
+*Connections — July*
+```
+1. Nadia      31    2.710
+2. Joe        28    3.036
+3. Bea        15    3.133
 ```
 ````
 
 The columns are position, player, puzzles played in the period, and the figure the game is
-ranked on, which for most of them is a mean score. Tables are emitted in period order, with
-every game shown against each period: current year, previous year, current month, previous
-month.
+ranked on, which for most of them is a mean score. A game's tables are kept together and
+the games run in name order, so the report reads game by game: current year, previous
+year, current month, previous month, then on to the next game. That run was taken on the
+first of the month, which is why August has a single puzzle in it.
 
 ### Names
 
@@ -108,7 +109,9 @@ score, knows anything about a particular game.
    their mean, and the players are sorted by it. Ranking is by mean rather than total, so
    somebody who misses a fortnight is not punished for it.
 8. **Render.** Names are shortened to the shortest form that still tells the players
-   apart, and each table is written as a bold heading above a fenced block.
+   apart, and each table is written as a bold heading above a fenced block. A game's
+   tables run together, yearly ahead of monthly and most recent first, and the games
+   themselves are ordered by name.
 
 ### Positions and ties
 
@@ -387,8 +390,8 @@ public sealed class QuordleGame : PuzzleGame
 }
 ```
 
-Add it to `GameRegistry.Default`, where the order decides which game is printed first
-against each period. Deriving from `PuzzleGame` brings the puzzle-number-to-date
+Add it to `GameRegistry.Default`, where the order does not matter, since the report runs
+the games in name order. Deriving from `PuzzleGame` brings the puzzle-number-to-date
 arithmetic with it; a game dated some other way can implement `IGame` directly.
 
 The grouping, ranking, tie handling and rendering are all game agnostic, and read a game

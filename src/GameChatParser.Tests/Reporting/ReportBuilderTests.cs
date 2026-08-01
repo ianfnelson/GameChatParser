@@ -48,20 +48,20 @@ public class ReportBuilderTests
         """;
 
     [Fact]
-    public void Pairs_each_game_against_the_same_period()
+    public void Keeps_a_games_periods_together_and_runs_the_games_in_name_order()
     {
         var report = Build(SampleChat);
 
         Assert.Equal(
             [
-                "Wordle — 2026",
                 "Connections — 2026",
-                "Wordle — 2025",
                 "Connections — 2025",
-                "Wordle — January",
                 "Connections — January",
-                "Wordle — December",
-                "Connections — December"
+                "Connections — December",
+                "Wordle — 2026",
+                "Wordle — 2025",
+                "Wordle — January",
+                "Wordle — December"
             ],
             report.Leaderboards.Select(board => board.Title));
     }
@@ -148,7 +148,7 @@ public class ReportBuilderTests
             """));
 
         Assert.Equal(
-            ["Wordle — 2026", "Quordle — 2026", "Wordle — January", "Quordle — January"],
+            ["Quordle — 2026", "Quordle — January", "Wordle — 2026", "Wordle — January"],
             report.Leaderboards.Select(board => board.Title));
         Assert.Equal(6d, Assert.Single(Find(report, "Quordle — January").Entries).Average);
     }
