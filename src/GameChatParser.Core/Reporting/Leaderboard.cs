@@ -12,8 +12,7 @@ public sealed record Leaderboard
 
     /// <summary>
     /// How far back the period sits among those the game has results for, where zero is
-    /// the most recent. This is what lines a game's yearly table up against another
-    /// game's yearly table in the report.
+    /// the most recent. This is what orders a game's tables within its own run of them.
     /// </summary>
     public required int PeriodIndex { get; init; }
 

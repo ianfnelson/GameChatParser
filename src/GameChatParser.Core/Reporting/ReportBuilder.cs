@@ -37,17 +37,14 @@ public sealed class ReportBuilder(
             }
         }
 
-        // Games keep their registration order within a period, and a game's periods are
-        // paired with the matching periods of the other games, so the report reads year
-        // by year and then month by month.
+        // A game's tables are kept together and the games run in name order, so the report
+        // reads game by game, and within a game the yearly tables come ahead of the
+        // monthly ones, most recent period first.
         var leaderboards = scoresByGame
-            .SelectMany((entry, gameIndex) => leaderboardBuilder
-                .Build(entry.Game, entry.Scores)
-                .Select(leaderboard => (leaderboard, gameIndex)))
-            .OrderBy(item => item.leaderboard.PeriodKind)
-            .ThenBy(item => item.leaderboard.PeriodIndex)
-            .ThenBy(item => item.gameIndex)
-            .Select(item => item.leaderboard)
+            .SelectMany(entry => leaderboardBuilder.Build(entry.Game, entry.Scores))
+            .OrderBy(leaderboard => leaderboard.GameName, StringComparer.Ordinal)
+            .ThenBy(leaderboard => leaderboard.PeriodKind)
+            .ThenBy(leaderboard => leaderboard.PeriodIndex)
             .ToList();
 
         return new Report { Leaderboards = leaderboards };

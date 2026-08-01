@@ -7,8 +7,8 @@ namespace GameChatParser.Core.Games;
 
 /// <summary>
 /// The games the parser knows about. To support another game, implement
-/// <see cref="IGame"/> and add it to <see cref="Default"/>; the order here is the order
-/// the games appear against each period in the report.
+/// <see cref="IGame"/> and add it to <see cref="Default"/>; the order here does not
+/// matter, since the report runs the games in name order.
 /// </summary>
 public static class GameRegistry
 {
