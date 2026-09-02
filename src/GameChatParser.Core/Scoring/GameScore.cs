@@ -4,7 +4,10 @@ namespace GameChatParser.Core.Scoring;
 /// One player's result for one puzzle.
 /// </summary>
 /// <param name="Player">The name the player posts under in the chat.</param>
-/// <param name="PuzzleNumber">The puzzle's sequence number, as printed in the shared result.</param>
+/// <param name="PuzzleNumber">
+/// The puzzle's sequence number, as printed in the shared result, or as the game restates
+/// it where a renumbering means the printed number no longer dates the puzzle.
+/// </param>
 /// <param name="Date">The day the puzzle belongs to, derived from its number.</param>
 /// <param name="Value">
 /// The quantity the game is ranked on. Whether a larger value is better depends on

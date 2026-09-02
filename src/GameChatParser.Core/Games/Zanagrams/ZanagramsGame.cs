@@ -13,7 +13,7 @@ namespace GameChatParser.Core.Games.Zanagrams;
 /// </summary>
 /// <remarks>
 /// A solve time means nothing on its own, because it is mostly a measure of how hard that
-/// day's puzzle was: the export's times run from 41 seconds to nearly 22 minutes, and most
+/// day's puzzle was: the export's times run from 32 seconds to nearly 30 minutes, and most
 /// of that spread is the puzzle rather than the player. So parsing only gets as far as the
 /// time a player took, and <see cref="Normalise"/> turns that into what they are ranked
 /// on, which is how they did against everybody else who played the same puzzle.
@@ -23,7 +23,7 @@ public abstract partial class ZanagramsGame : PuzzleGame
     /// <summary>
     /// What a hint adds to the time a player took. A hint reveals the next few letters of
     /// a word rather than the word itself, and the family already treats it as a last
-    /// resort: of the 148 shares in the export that report their hints, 137 took none.
+    /// resort: of the 358 shares in the export that report their hints, 324 took none.
     /// Twenty seconds is enough that buying a hint cannot buy a better placing, and little
     /// enough that one hint does not wreck a month.
     /// </summary>
@@ -38,11 +38,45 @@ public abstract partial class ZanagramsGame : PuzzleGame
     public override RankingDirection RankingDirection => RankingDirection.LowerIsBetter;
 
     /// <summary>
-    /// Calibrated so that Zanagrams #1 falls on 24 June 2026: 151 of the export's 156
-    /// shares were posted on the day this dates them to, and the five that were not are
-    /// one player catching up on the first five puzzles in a single sitting.
+    /// Calibrated so that Zanagrams #1 falls on 24 June 2026: 361 of the export's 366
+    /// shares on this numbering were posted on the day it dates them to, and the five
+    /// that were not are one player catching up on the first five puzzles in a single
+    /// sitting. It dates the new site's shares too, once
+    /// <see cref="OnTheOriginalNumbering"/> has put their numbers back on this series.
     /// </summary>
     protected override DateOnly PuzzleZeroDate => new(2026, 6, 23);
+
+    /// <summary>
+    /// The last puzzle the game numbered before it moved to a new site, shared on
+    /// 25 August 2026.
+    /// </summary>
+    /// <remarks>
+    /// The move renumbered the game: the puzzle for the next day, 26 August 2026, which
+    /// this numbering would have called #64, was shared as #73. Both sites' numbers are
+    /// dated from the same epoch, so the new site's have to be put back on the old series
+    /// before they mean a day, and the raw number is what says which series a share is on:
+    /// the old numbering stopped at 63 and can never produce a higher one, and the new
+    /// numbering started above it and only climbs. That holds whatever the share looks
+    /// like, which the heading's decoration does not, so it is what this reads.
+    /// </remarks>
+    public const int LastPuzzleBeforeTheMove = 63;
+
+    /// <summary>How far ahead of the numbering it replaced the new site's numbering runs.</summary>
+    public const int NumberingOffsetSinceTheMove = 9;
+
+    /// <summary>
+    /// What a heading is allowed in front of the game's name: the coloured disc the new
+    /// site puts there, 🔵 for the Original and 🟠 for the Master, and nothing at all on
+    /// every share from before the move.
+    /// </summary>
+    /// <remarks>
+    /// Both discs sit outside the basic multilingual plane, so to a regex, which works on
+    /// UTF-16 code units, each is a surrogate pair rather than one character: a class of
+    /// symbols alone, <c>\p{So}</c>, matches neither half of one. Admitting surrogates,
+    /// <c>\p{Cs}</c>, and repeating the class is what takes the pair whole, and the
+    /// symbols keep it honest for any decoration that does fit in the plane.
+    /// </remarks>
+    protected const string HeadingDecoration = @"(?:[\p{So}\p{Cs}\uFE0F]+\s*)?";
 
     /// <summary>
     /// Matches the heading naming this game's puzzle, and only this game's, so that the
@@ -69,10 +103,12 @@ public abstract partial class ZanagramsGame : PuzzleGame
 
             var digits = heading.Groups["puzzle"].Value.Replace(",", string.Empty);
 
-            if (!int.TryParse(digits, NumberStyles.None, CultureInfo.InvariantCulture, out var puzzleNumber))
+            if (!int.TryParse(digits, NumberStyles.None, CultureInfo.InvariantCulture, out var shared))
             {
                 continue;
             }
+
+            var puzzleNumber = OnTheOriginalNumbering(shared);
 
             // A message can name a puzzle without sharing a result, and no failed game
             // appears in the export, so a share with no time is left alone rather than
@@ -152,6 +188,15 @@ public abstract partial class ZanagramsGame : PuzzleGame
     }
 
     /// <summary>
+    /// Restates a shared puzzle number on the numbering the game used before it moved
+    /// sites, so that a share from either site dates to the day it was played, and so that
+    /// the two sites' shares of one puzzle would meet in one field rather than be ranked
+    /// as two.
+    /// </summary>
+    private static int OnTheOriginalNumbering(int puzzleNumber) =>
+        puzzleNumber > LastPuzzleBeforeTheMove ? puzzleNumber - NumberingOffsetSinceTheMove : puzzleNumber;
+
+    /// <summary>
     /// Reads the solve time from the lines beneath the heading, in seconds, or
     /// <c>null</c> where there is none to read. A time of nothing at all is no more a
     /// result than a missing line is.
@@ -182,8 +227,10 @@ public abstract partial class ZanagramsGame : PuzzleGame
 
     /// <summary>
     /// Reads how many hints were taken. The earliest shares carry no hint line at all, and
-    /// those games were played before the line existed rather than played badly, so a
-    /// missing line counts as no hints.
+    /// the new site dropped the line entirely, reporting only a <c>🎯 Perfect solve!</c>
+    /// badge on the shares that took none. Neither kind of share was played badly, and a
+    /// count that was never shared cannot be guessed at, so a missing line counts as no
+    /// hints and the badge is left unread.
     /// </summary>
     private static int ReadHints(IReadOnlyList<string> lines, int firstLine)
     {
@@ -203,9 +250,10 @@ public abstract partial class ZanagramsGame : PuzzleGame
 
     /// <summary>
     /// Matches the line reporting the solve time, which the game wrote as <c>Complete in</c>
-    /// before it settled on <c>Solved in</c>; both appear in the export. The phrase is what
-    /// picks the line out, which keeps the <c>🚀 02:02 faster than global average</c> line
-    /// from being read as a time.
+    /// before it settled on <c>Solved in</c>; both appear in the export, as does the new
+    /// site's <c>🔥 Solved in</c>. The phrase is what picks the line out, which keeps the
+    /// <c>🚀 02:02 faster than global average</c> line, and the new site's shortened
+    /// <c>🚀 00:14 faster than global</c>, from being read as a time.
     /// </summary>
     [GeneratedRegex(@"\b(?:Solved|Complete)\s+in\s+(?<minutes>\d{1,3}):(?<seconds>\d{2})\b", RegexOptions.IgnoreCase)]
     private static partial Regex SolveTimeLine();

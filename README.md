@@ -270,7 +270,7 @@ one.
 
 ## Zanagrams
 
-[Zanagrams](https://zanagrams.com/) gives you a cluster of letters joined by paths and a
+[Zanagrams](https://pzlgames.com/games/zanagrams/) gives you a cluster of letters joined by paths and a
 clue for each word to find. You trace a word by dragging along the paths, the letters you
 used disappear, and the grid collapses inwards until every word is found. A hint reveals
 the next group of letters in a word. A result is only shared for a completed puzzle, so as
@@ -305,8 +305,52 @@ message naming a puzzle with no time to read is ignored rather than scored, on t
 principle as a Connections message with no grid. No failed or abandoned result appears in
 the export, so the format for one, if there is one, is unknown.
 
+### The move to a new site
+
+On 26 August 2026 the game moved from `zanagrams.com` to `pzlgames.com`, which rewrote the
+share around the same three facts:
+
+```text
+🔵 Zanagrams #73
+
+🔥 Solved in 02:43
+
+🚀 00:14 faster than global
+
+🎯 Perfect solve!
+
+https://pzlgames.com/games/zanagrams/
+```
+
+Four things changed, and **both formats parse**, since the export holds two months of the
+old one:
+
+- **The heading gained a coloured disc**, 🔵 for the Original and 🟠 for the Master, so the
+  headings allow one in front of the game's name. Both discs sit outside the basic
+  multilingual plane, which is a trap worth naming: to a regex, working on UTF-16 code
+  units, each disc is a surrogate pair rather than one character, so a class of symbols
+  alone would match half of one.
+- **The solve time changed emoji**, 🔥 for 🎉. The phrase `Solved in` is what picks the line
+  out, so nothing had to change for it.
+- **The boast lost a word**, `faster than global` for `faster than global average`. It is
+  ignored either way.
+- **The hint line went**, replaced by a `🎯 Perfect solve!` badge on the shares that took
+  none: 44 of the 51 shares since the move carry it, against 90% of the older shares
+  reporting no hints. A count the site never shares cannot be read, so a share from the new
+  site is charged for no hints, and the badge is left unread rather than turned into a
+  penalty for the shares missing it.
+
+**The move also renumbered the game.** The last puzzle on the old numbering was #63, shared
+on 25 August 2026; the next day's, which would have been #64, was shared as #73. Since the
+puzzle number is what dates a result, a new site's number is restated nine lower before it
+is used, which is what keeps a September result out of the middle of September's leaderboard
+and puts both sites' shares of one puzzle in one field. The number is what says which
+numbering a share is on, rather than the disc in front of it: the old numbering stopped at
+63 and can never produce a higher one, so anything above 63 came from the new site however
+it was written.
+
 **The `🚀` line is deliberately ignored.** It only ever appears when the player beat the
-global average, so it is missing from 63 of the export's 156 shares, and it is missing
+global average, so it is missing from 200 of the export's 417 shares, and it is missing
 precisely for the slower results, which is the least useful way for data to be absent. The
 figure it reports also drifts through the day as more people play: three players sharing
 the same puzzle implied global averages of 196, 204 and 208 seconds. A share carrying the
@@ -317,7 +361,7 @@ line scores exactly what the same share without it would.
 Wordle and Connections both share a figure that means the same thing on every day of the
 year: four guesses is four guesses, and a player's scores can simply be averaged. A
 Zanagrams solve time means nothing on its own, because it is mostly a measure of how hard
-that day's puzzle was. The export's times run from 41 seconds to nearly 22 minutes, and
+that day's puzzle was. The export's times run from 32 seconds to nearly 30 minutes, and
 most of that spread is the puzzle rather than the player. Averaging raw times would rank
 whoever happened to play on the easy days, and would quietly reward anyone who declined to
 post a bad one.
@@ -343,10 +387,11 @@ The result reads as a pace index. **A lower figure is better**: `1.000` is famil
 needs.
 
 Hints cost 20 seconds because a hint is a partial reveal rather than a solved word, and the
-family already treats it as a last resort: of the 148 shares reporting their hints, 137 took
-none, 9 took one and 2 took two. The penalty is big enough that buying a hint cannot buy a
-better placing, and small enough that one hint does not wreck a month. At 20 seconds no
-result in the export changes position.
+family already treats it as a last resort: of the 358 shares reporting their hints, 324 took
+none, 20 took one, 5 took two and 9 took three. The penalty is big enough that buying a hint
+cannot buy a better placing, and small enough that one hint does not wreck a month. At 20
+seconds no result in the export changes position, and the shares since the move report no
+hints to charge for at all.
 
 Three details are worth stating, because each is easy to get wrong:
 
@@ -363,11 +408,12 @@ yourself out makes the figure mean the same thing whether two players posted or 
 
 **Why uncontested puzzles vanish.** A puzzle only one player posted counts towards nobody's
 figure and towards nobody's `Played` count, so `Played` always matches the sample the figure
-was built from. That costs 7 of the export's 33 Original puzzles and 1 of its 22 Master
+was built from. That costs 7 of the export's 71 Original puzzles and 1 of its 60 Master
 ones, nearly all of them in the first week before the rest of the family took the game up.
 
 **Dated** by adding the puzzle number to 23 June 2026, which puts Zanagrams #1 on 24 June
-2026. Both puzzles of a day share a number and so share a date.
+2026, and a number from the new site there too once it has been restated nine lower, which
+puts its #73 on 26 August 2026. Both puzzles of a day share a number and so share a date.
 
 Because a pace index is continuous rather than a mean of small integers, the tie handling
 described above will effectively never be exercised by these two tables.
