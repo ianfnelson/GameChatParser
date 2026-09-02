@@ -32,7 +32,9 @@ The README documents the ranking algorithms in full. What matters structurally:
 
 ## Things that will bite you
 
-**Puzzle epochs are calibrated against real shared results, not against the games' launch dates.** Wordle's `PuzzleZeroDate` is a day later than Wordle launched, because the New York Times renumbered. Changing either epoch by one day silently moves every result into a neighbouring month and quietly corrupts every leaderboard. Verify against a known pairing (Wordle 1,281 is 21 December 2024; Connections #619 is 19 February 2025; Strands #764 is 6 April 2026; Zanagrams #1 is 24 June 2026).
+**Puzzle epochs are calibrated against real shared results, not against the games' launch dates.** Wordle's `PuzzleZeroDate` is a day later than Wordle launched, because the New York Times renumbered. Changing either epoch by one day silently moves every result into a neighbouring month and quietly corrupts every leaderboard. Verify against a known pairing (Wordle 1,281 is 21 December 2024; Connections #619 is 19 February 2025; Strands #764 is 6 April 2026; Zanagrams #1 is 24 June 2026, and Zanagrams #73 is 26 August 2026).
+
+**Zanagrams is numbered twice.** It moved from `zanagrams.com` to `pzlgames.com` on 26 August 2026, and the new site resumed the numbering nine ahead: the last puzzle of the old numbering was #63 on 25 August 2026, and the next day's was shared as #73 rather than #64. `ZanagramsGame` restates anything above 63 nine lower so that one epoch dates both, which is why a raw shared number and a `GameScore.PuzzleNumber` are not always the same figure for this game. The number is what tells the two numberings apart, deliberately, rather than the coloured disc the new site puts in front of the heading: the old numbering can never produce a number above 63, whereas decoration survives neither retyping nor a further redesign.
 
 **Connections squares are outside the basic multilingual plane.** Never put them in a regex character class: `[🟨🟩🟦🟪]{4}` compiles to a class of UTF-16 code units and matches two squares rather than four. This was a real bug inherited from the predecessor. Classify rows by iterating runes, as `ConnectionsGame.ClassifyRow` does. Row width is also what tells a four-wide Connections grid from a five-wide Wordle one, which share two colours.
 
@@ -46,7 +48,7 @@ The README documents the ranking algorithms in full. What matters structurally:
 
 **Connections and Strands both need at least one grid row.** A message naming a puzzle with no grid must be ignored, not scored zero. In Strands the first row must be a full four items wide, but every row after it counts however short: 106 of the 136 shares in the export end in a remainder row, and some of those rows carry a hint, so dropping them reports games as cleaner than they were.
 
-**The Wordle, Strands and Zanagrams puzzle lines are anchored to the start of a line.** Prose mentioning a puzzle number does not count as a result. Connections is the exception, matching its `Puzzle #619` anywhere in the message.
+**The Wordle, Strands and Zanagrams puzzle lines are anchored to the start of a line.** Prose mentioning a puzzle number does not count as a result. Connections is the exception, matching its `Puzzle #619` anywhere in the message. The Zanagrams headings allow the new site's disc between the anchor and the game's name, and that allowance has to admit surrogates (`\p{Cs}`) because 🔵 and 🟠 are outside the basic multilingual plane, for the same reason the Connections squares are.
 
 **A default interface member is not inherited as a virtual one.** `IGame.Normalise` and `IGame.Summarise` have defaults, and `PuzzleGame` restates both as `virtual` for exactly this reason: a game deriving from `PuzzleGame` and declaring its own `Normalise` without that restatement compiles, is never called, and silently ranks on the raw parsed value instead. Keep the restatement, and if you change either default, change it in both places.
 

@@ -132,10 +132,126 @@ public class ZanagramsGameTests
     [Fact]
     public void Reads_a_puzzle_number_carrying_a_thousands_separator()
     {
-        var score = Parse("Zanagrams #1,024\n\n🎉 Solved in 01:22");
+        var separated = Parse("Zanagrams #1,024\n\n🎉 Solved in 01:22");
+        var plain = Parse("Zanagrams #1024\n\n🎉 Solved in 01:22");
+
+        Assert.NotNull(separated);
+        Assert.NotNull(plain);
+        Assert.Equal(plain.PuzzleNumber, separated.PuzzleNumber);
+        Assert.Equal(1024 - ZanagramsGame.NumberingOffsetSinceTheMove, separated.PuzzleNumber);
+    }
+
+    [Fact]
+    public void Reads_the_share_the_new_site_writes()
+    {
+        // The game moved sites, which put a coloured disc in front of the heading, swapped
+        // the emoji on the solve time, shortened the line boasting about the global average
+        // and dropped the hint line for a badge.
+        var score = Parse(
+            """
+            🔵 Zanagrams #73
+
+            🔥 Solved in 02:43
+
+            🚀 00:14 faster than global
+
+            🎯 Perfect solve!
+
+            https://pzlgames.com/games/zanagrams/
+            """);
 
         Assert.NotNull(score);
-        Assert.Equal(1024, score.PuzzleNumber);
+        Assert.Equal(163d, score.Value);
+    }
+
+    [Fact]
+    public void Reads_the_new_sites_master_share_under_its_own_heading()
+    {
+        var master = TestChat.Message(
+            "Joe Whelan",
+            "🟠 Zanagrams Master #73\n\n🔥 Solved in 09:50\n\n🎯 Perfect solve!");
+
+        var score = _master.TryParseScore(master);
+
+        Assert.NotNull(score);
+        Assert.Equal(590d, score.Value);
+        Assert.Null(_game.TryParseScore(master));
+        Assert.Null(_master.TryParseScore(TestChat.Message("Joe Whelan", "🔵 Zanagrams #73\n\n🔥 Solved in 02:43")));
+    }
+
+    [Fact]
+    public void Dates_the_new_sites_numbering_from_the_day_the_move_landed_on()
+    {
+        // The old numbering's last puzzle was #63, shared on 25 August 2026, and the next
+        // day's puzzle was shared as #73 rather than #64, so the new numbering runs nine
+        // ahead and has to be put back before it means a day.
+        var before = Parse("Zanagrams #63\n\n🎉 Solved in 01:22");
+        var after = Parse("🔵 Zanagrams #73\n\n🔥 Solved in 01:22");
+
+        Assert.NotNull(before);
+        Assert.NotNull(after);
+        Assert.Equal(new DateOnly(2026, 8, 25), before.Date);
+        Assert.Equal(new DateOnly(2026, 8, 26), after.Date);
+        Assert.Equal(before.PuzzleNumber + 1, after.PuzzleNumber);
+    }
+
+    [Fact]
+    public void Reads_the_numbering_from_the_number_rather_than_from_the_decoration()
+    {
+        // The number is what says which numbering a share is on, because the old one
+        // stopped at 63 and the new one started above it. A new site's share stripped of
+        // its disc, retyped or forwarded as text, still dates to the day it was played.
+        var decorated = Parse("🔵 Zanagrams #73\n\n🔥 Solved in 01:22");
+        var bare = Parse("Zanagrams #73\n\n🔥 Solved in 01:22");
+
+        Assert.NotNull(decorated);
+        Assert.NotNull(bare);
+        Assert.Equal(decorated.PuzzleNumber, bare.PuzzleNumber);
+        Assert.Equal(new DateOnly(2026, 8, 26), bare.Date);
+    }
+
+    [Fact]
+    public void Ranks_two_shares_of_one_puzzle_against_each_other_however_they_are_numbered()
+    {
+        // Both numberings are restated onto one series, so a puzzle's field is whoever
+        // played it, not whoever wrote its number the same way.
+        var paced = _game.Normalise(
+        [
+            Time("Ana", 64, 60),
+            Parse("🔵 Zanagrams #73\n\n🔥 Solved in 04:00")! with { Player = "Bea" }
+        ]);
+
+        Assert.Equal(2, paced.Count);
+        Assert.Equal(0.25d, Pace(paced, "Ana"), 10);
+        Assert.Equal(4d, Pace(paced, "Bea"), 10);
+    }
+
+    [Fact]
+    public void Ignores_the_new_sites_shortened_boast_about_the_global_average()
+    {
+        // The new site writes "faster than global" where the old wrote "faster than global
+        // average"; neither is a solve time.
+        Assert.Null(Parse("🔵 Zanagrams #73\n\n🚀 00:14 faster than global"));
+    }
+
+    [Fact]
+    public void Charges_no_hints_for_a_share_the_new_site_reports_none_on()
+    {
+        // The new site dropped the hint line, so a count it never shared cannot be read.
+        // A share that took hints looks exactly like one that did not, but for the badge.
+        var perfect = Parse("🔵 Zanagrams #73\n\n🔥 Solved in 01:22\n\n🎯 Perfect solve!");
+        var quiet = Parse("🔵 Zanagrams #73\n\n🔥 Solved in 01:22");
+
+        Assert.NotNull(perfect);
+        Assert.NotNull(quiet);
+        Assert.Equal(82d, perfect.Value);
+        Assert.Equal(perfect.Value, quiet.Value);
+    }
+
+    [Fact]
+    public void Ignores_a_decorated_puzzle_number_mentioned_part_way_through_a_line()
+    {
+        Assert.Null(Parse("Anyone done 🔵 Zanagrams #73 yet?\n\n🔥 Solved in 01:22"));
     }
 
     [Theory]
